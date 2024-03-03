@@ -1,6 +1,6 @@
 package fr.tp.restClient;
 
-import fr.tp.models.ConfirmMailModel;
+import fr.tp.models.ConfirmMail;
 import io.smallrye.common.annotation.Blocking;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
@@ -19,6 +19,6 @@ public interface MailerService {
     @Blocking
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_HTML)
-    Response sendEmail(ConfirmMailModel confirmMail);
+    Response sendEmail(ConfirmMail confirmMail);
 
 }

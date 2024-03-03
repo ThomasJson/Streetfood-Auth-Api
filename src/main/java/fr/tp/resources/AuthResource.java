@@ -23,14 +23,13 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class AuthResource {
-
-    private CurrentUserModel currentUser;
 
     @Context
     UriBuilder uriBuilder;
@@ -53,15 +52,23 @@ public class AuthResource {
     @POST
     @Path("/login")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response login(LoginInputModel loginInput) {
+    public Response login(LoginRequest loginInput) {
 
         try {
-            AuthResponseModel authResponseModel = authService.authenticate(loginInput.getMail(), loginInput.getPassword());
-            return Response.ok().entity(authResponseModel).build();
+
+            LoginResponse loginResponse = authService.authenticate(loginInput.getMail(), loginInput.getPassword());
+            return Response.ok().entity(loginResponse).build();
+
+        } catch (SecurityException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new AuthResponse("Unable to process request.", false))
+                    .build();
         }
 
-        catch (SecurityException e) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
+        catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new AuthResponse("An unexpected error occurred.", false))
+                    .build();
         }
     }
 
@@ -69,101 +76,172 @@ public class AuthResource {
     @Path("/register")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response register(RegisterInputModel registerInput) {
-
+    public Response register(RegisterRequest registerInput) {
         try {
 
-            AccountRepository accountRepository = new AccountRepository();
-
             if (!AuthUtils.isValidEmail(registerInput.getMail())) {
-                return Response.status(Response.Status.BAD_REQUEST).entity("Email invalide.").build();
-            } else if (accountRepository.findByMail(registerInput.getMail()).isPresent()) {
-                return Response.status(Response.Status.BAD_REQUEST).entity("Email déjà utilisé.").build();
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new AuthResponse("Invalid email adress.", false))
+                        .build();
+            }
+
+            if (accountRepository.findByMail(registerInput.getMail()).isPresent()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new AuthResponse("Email adress already used.", false))
+                        .build();
             }
 
             String confirmationToken = Jwt.issuer("ConfirmEmailToken")
                     .upn(registerInput.getMail())
                     .claim("mail", registerInput.getMail())
+                    .claim("pseudo", registerInput.getPseudo())
                     .claim("firstName", registerInput.getFirstName())
-                    .expiresAt(System.currentTimeMillis()+600) // 10min
+                    .expiresAt(System.currentTimeMillis() + 600000)
                     .sign();
 
-            currentUser = new CurrentUserModel(registerInput.getMail(), registerInput.getPassword(), registerInput.getFirstName(), registerInput.getPseudo());
-
-            UriBuilder builder = uriInfo.getBaseUriBuilder()
-                    .path("auth/confirm")
-                    .queryParam("token", confirmationToken);
-
-            String confirmationLink = builder.build().toString();
-
-            ConfirmMailModel confirmMail = new ConfirmMailModel(registerInput.getMail(), "Create Account", confirmationLink);
+            String confirmationLink = "http://localhost:3000/account/validate/" + confirmationToken;
+            ConfirmMail confirmMail = new ConfirmMail(registerInput.getMail(), "Create your new Streetfood.com account", confirmationLink);
             mailerService.sendEmail(confirmMail);
 
-            return Response.status(Response.Status.OK).entity("Un email de confirmation a été envoyé.").build();
+            return Response.status(Response.Status.OK)
+                    .entity(new AuthResponse("Email successfully sent.", true))
+                    .build();
 
         } catch (SecurityException e) {
-            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new AuthResponse("Unable to process request.", false))
+                    .build();
+        }
+
+        catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new AuthResponse("An unexpected error occurred.", false))
+                    .build();
         }
     }
 
-    @GET
-    @Path("/confirm")
-    public Response confirm(@QueryParam("token") String token) {
+    @POST
+    @Path("/validate")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response validate(TokenRequest tokenRequest) {
 
         try {
-            JsonWebToken jwt = parser.parse(token);
+            JsonWebToken jwt = parser.parse(tokenRequest.getToken());
 
-            if(jwt.containsClaim("mail") && jwt.getClaim("mail").equals(currentUser.getCurrentMail())) {
+            if (jwt != null && jwt.getIssuer().equals("ConfirmEmailToken")) {
 
-                AccountEntity account = authService.register(currentUser.getCurrentMail(), currentUser.getCurrentPsw(), currentUser.getCurrentName(), currentUser.getCurrentPseudo());
-
-                if (account != null) {
-                    return Response.status(Response.Status.OK).entity("Le compte a bien été créé.").build();
-                }
-                else {
-                    return Response.status(Response.Status.BAD_REQUEST).entity("Erreur lors de la création du compte.").build();
-                }
-
+                return Response.ok(new AuthResponse("Valid token.", true)).build();
             } else {
-                return Response.status(Response.Status.UNAUTHORIZED).entity("Token invalide.").build();
-            }
 
-        } catch (JwtException e) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Token invalide.").build();
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
+                return Response.status(Response.Status.UNAUTHORIZED)
+                        .entity(new AuthResponse("Invalid token.", false)).build();
+            }
+        } catch (JwtException | ParseException e) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(new AuthResponse("Token validation error.", false)).build();
+        }
+
+        catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new AuthResponse("An unexpected error occurred.", false))
+                    .build();
         }
     }
 
-    // TODO : make checkCookie better ! Create authService.check() (no repository in this. !)
+    @POST
+    @Path("/create")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response create(CreateUserRequest createUserRequest) {
+
+        try {
+            JsonWebToken jwt = parser.parse(createUserRequest.getToken());
+            if (jwt != null) {
+
+                String mail = jwt.getClaim("mail");
+                String pseudo = jwt.getClaim("pseudo");
+                String firstName = jwt.getClaim("firstName");
+                String password = createUserRequest.getPassword();
+
+                AccountEntity acc = authService.create(mail, password, firstName, pseudo);
+
+                if (acc != null) {
+                    return Response.status(Response.Status.OK)
+                            .entity(new AuthResponse("Account created.", true))
+                            .build();
+                } else {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                            .entity(new AuthResponse("Account not created.", false))
+                            .build();
+                }
+            } else{
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new AuthResponse("Token is null.", false))
+                        .build();
+            }
+        } catch (JwtException e) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(new AuthResponse("Invalid token.", false))
+                    .build();
+
+        } catch (ParseException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new AuthResponse("Token parsing error.", false))
+                    .build();
+        }
+
+        catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new AuthResponse("An unexpected error occurred.", false))
+                    .build();
+        }
+    }
 
     @GET
     @Path("/check")
     @Produces(MediaType.APPLICATION_JSON)
     public Response checkCookie(@CookieParam("StreetF") String cookie) {
 
-        if (cookie != null) {
+        if (cookie == null || cookie.isEmpty()) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(new AuthResponse("Null or empty token.", false))
+                    .build();
+        }
 
-            try {
-                String token = cookie.startsWith("Bearer ") ? cookie.substring(7) : cookie;
-                JsonWebToken jwt = parser.parse(token);
+        try {
+            String token = cookie.startsWith("Bearer ") ? cookie.substring(7) : cookie;
+            JsonWebToken jwt = parser.parse(token);
 
-                if(jwt.containsClaim("mail")) {
-
-                    String email = jwt.getClaim("mail");
-                    Optional<AccountEntity> account = authService.check(email);
-                    AuthResponseModel authResponseModel = new AuthResponseModel(cookie, account.get().getId(), 4, true);
-                    return Response.ok().entity(authResponseModel).build();
-                }
-
-            } catch (ParseException e) {
-                return null;
+            if (!jwt.containsClaim("mail")) {
+                return Response.status(Response.Status.UNAUTHORIZED)
+                        .entity(new AuthResponse("Token is missing some data.", false))
+                        .build();
             }
 
-            return null;
+            String email = jwt.getClaim("mail");
+            Optional<AccountEntity> accountOpt = authService.check(email);
 
-        } else {
-            return Response.ok(new AuthResponseModel(null, null, 0, false)).build();
+            if (accountOpt.isEmpty()) {
+                return Response.status(Response.Status.UNAUTHORIZED)
+                        .entity(new AuthResponse("Account not found.", false))
+                        .build();
+            }
+
+            AccountEntity account = accountOpt.get();
+            LoginResponse loginResponse = new LoginResponse(token, account.getId(), account.getRole().getWeight(), true);
+            return Response.ok().entity(loginResponse).build();
+
+        } catch (JwtException | ParseException e) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(new AuthResponse("Token validation error.", false))
+                    .build();
+        }
+
+        catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new AuthResponse("An unexpected error occurred.", false))
+                    .build();
         }
     }
 

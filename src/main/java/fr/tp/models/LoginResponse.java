@@ -2,13 +2,13 @@ package fr.tp.models;
 
 import java.util.UUID;
 
-public class AuthResponseModel {
+public class LoginResponse {
     private String token;
     private UUID accountId;
     private int roleWeight;
     private boolean result;
 
-    public AuthResponseModel(String token, UUID accountId, int roleWeight, boolean result) {
+    public LoginResponse(String token, UUID accountId, int roleWeight, boolean result) {
         this.token = token;
         this.accountId = accountId;
         this.roleWeight = roleWeight;

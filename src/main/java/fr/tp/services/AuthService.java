@@ -3,7 +3,7 @@ package fr.tp.services;
 import fr.tp.entities.AccountEntity;
 import fr.tp.entities.AppUserEntity;
 import fr.tp.entities.RoleEntity;
-import fr.tp.models.AuthResponseModel;
+import fr.tp.models.LoginResponse;
 import fr.tp.repositories.AccountRepository;
 import fr.tp.repositories.AppUserRepository;
 import fr.tp.repositories.RoleRepository;
@@ -25,7 +25,7 @@ public class AuthService {
     @Inject
     AppUserRepository appUserRepository;
 
-    public AuthResponseModel authenticate(String mail, String password) {
+    public LoginResponse authenticate(String mail, String password) {
 
         Optional<AccountEntity> accountOpt = accountRepository.findByMail(mail);
 
@@ -39,7 +39,7 @@ public class AuthService {
     }
 
     @Transactional
-    public AccountEntity register(String mail, String password, String firstName, String pseudo) {
+    public AccountEntity create(String mail, String password, String firstName, String pseudo) {
 
         Optional<RoleEntity> roleUser = roleRepository.findRoleByTitle("User");
         AppUserEntity newAppUser = appUserRepository.createNewAppUser(firstName);

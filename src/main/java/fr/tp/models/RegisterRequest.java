@@ -1,12 +1,12 @@
 package fr.tp.models;
 
-public class RegisterInputModel {
+public class RegisterRequest {
     private String mail;
     private String password;
     private String firstName;
     private String pseudo;
 
-    public RegisterInputModel() {
+    public RegisterRequest() {
     }
 
     public String getMail() {

@@ -1,6 +1,6 @@
 package fr.tp.models;
 
-public class ConfirmMailModel {
+public class ConfirmMail {
 
     private String email;
 
@@ -8,16 +8,10 @@ public class ConfirmMailModel {
 
     private String body;
 
-    public ConfirmMailModel(String email, String subject, String confirmationLink) {
+    public ConfirmMail(String email, String subject, String confirmationLink) {
         this.email = email;
         this.subject = subject;
-        this.body =
-            "<html>" +
-                "<body>" +
-                    "<p>To complete your registration, please click the link below:</p>" +
-                    "<a href=\"" + confirmationLink + "\">Confirm Registration</a>" +
-                "</body>" +
-            "</html>";
+        this.body = confirmationLink;
     }
 
     public String getEmail() {
@@ -43,4 +37,5 @@ public class ConfirmMailModel {
     public void setBody(String body) {
         this.body = body;
     }
+
 }

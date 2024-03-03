@@ -2,14 +2,14 @@ package fr.tp.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class LoginInputModel {
+public class LoginRequest {
     @JsonProperty("mail")
     private String mail;
 
     @JsonProperty("password")
     private String password;
 
-    public LoginInputModel() {
+    public LoginRequest() {
     }
 
     public String getMail() {

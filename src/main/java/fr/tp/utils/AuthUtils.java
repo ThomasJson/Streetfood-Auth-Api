@@ -1,7 +1,7 @@
 package fr.tp.utils;
 
 import fr.tp.entities.AccountEntity;
-import fr.tp.models.AuthResponseModel;
+import fr.tp.models.LoginResponse;
 import io.smallrye.jwt.build.Jwt;
 import org.mindrot.jbcrypt.BCrypt;
 import java.util.regex.Pattern;
@@ -26,7 +26,7 @@ public class AuthUtils {
         }
     }
 
-    public static AuthResponseModel generateAuthResponse(AccountEntity account) {
+    public static LoginResponse generateAuthResponse(AccountEntity account) {
 
         String token = Jwt.issuer("StreetF")
                 .upn(account.getMail())
@@ -36,7 +36,7 @@ public class AuthUtils {
                 .expiresAt(System.currentTimeMillis()+3600*10)
                 .sign();
 
-        return new AuthResponseModel("Bearer " + token, account.getId(), account.getRole().getWeight(), true);
+        return new LoginResponse("Bearer " + token, account.getId(), account.getRole().getWeight(), true);
     }
 
 }
