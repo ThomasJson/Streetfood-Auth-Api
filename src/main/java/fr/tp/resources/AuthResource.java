@@ -131,7 +131,7 @@ public class AuthResource {
 
             if (jwt != null && jwt.getIssuer().equals("ConfirmEmailToken")) {
 
-                return Response.ok(new AuthResponse("Valid token.", true)).build();
+                return Response.ok().entity("{\"token\":\"" + tokenRequest.getToken() + "\"}").build();
             } else {
 
                 return Response.status(Response.Status.UNAUTHORIZED)
@@ -168,11 +168,11 @@ public class AuthResource {
 
                 if (acc != null) {
                     return Response.status(Response.Status.OK)
-                            .entity(new AuthResponse("Account created.", true))
+                            .entity(new AuthResponse("Account created :)", true))
                             .build();
                 } else {
                     return Response.status(Response.Status.BAD_REQUEST)
-                            .entity(new AuthResponse("Account not created.", false))
+                            .entity(new AuthResponse("Error creating the account.", false))
                             .build();
                 }
             } else{
@@ -204,7 +204,7 @@ public class AuthResource {
     public Response checkCookie(@CookieParam("StreetF") String cookie) {
 
         if (cookie == null || cookie.isEmpty()) {
-            return Response.status(Response.Status.UNAUTHORIZED)
+            return Response.status(Response.Status.OK)
                     .entity(new AuthResponse("Null or empty token.", false))
                     .build();
         }
