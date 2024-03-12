@@ -13,6 +13,7 @@ release.properties
 bin/
 
 # IntelliJ
+src/main/java/fr.tp/services/JwtService
 src/main/resources/application.properties
 src/main/resources/privateKey.pem
 src/main/resources/publicKey.pem

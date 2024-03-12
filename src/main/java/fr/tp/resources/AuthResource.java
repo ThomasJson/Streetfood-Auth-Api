@@ -5,6 +5,7 @@ import fr.tp.models.*;
 import fr.tp.repositories.AccountRepository;
 import fr.tp.restClient.MailerService;
 
+import fr.tp.services.JwtService;
 import io.smallrye.jwt.auth.principal.ParseException;
 import jakarta.ws.rs.core.Context;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -48,6 +49,17 @@ public class AuthResource {
 
     @Inject
     AccountRepository accountRepository;
+
+    @Inject
+    JwtService jwtService;
+
+    @GET
+    @Path("/jwt")
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response getJwt(){
+        String jwt = jwtService.generateJwt();
+        return Response.ok(jwt).build();
+    }
 
     @POST
     @Path("/login")
