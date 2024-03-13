@@ -26,17 +26,4 @@ public class AuthUtils {
         }
     }
 
-    public static LoginResponse generateAuthResponse(AccountEntity account) {
-
-        String token = Jwt.issuer("StreetF")
-                .upn(account.getMail())
-                .claim("id", account.getId())
-                .claim("mail", account.getMail())
-                .claim("role", account.getRole())
-                .expiresAt(System.currentTimeMillis()+3600*10)
-                .sign();
-
-        return new LoginResponse("Bearer " + token, account.getId(), account.getRole().getWeight(), true);
-    }
-
 }

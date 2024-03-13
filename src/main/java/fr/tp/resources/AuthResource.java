@@ -5,8 +5,9 @@ import fr.tp.models.*;
 import fr.tp.repositories.AccountRepository;
 import fr.tp.restClient.MailerService;
 
-import fr.tp.services.JwtService;
 import io.smallrye.jwt.auth.principal.ParseException;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.core.Context;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import io.smallrye.jwt.build.Jwt;
@@ -23,8 +24,6 @@ import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-
-import java.util.Objects;
 import java.util.Optional;
 
 @Path("/auth")
@@ -50,18 +49,8 @@ public class AuthResource {
     @Inject
     AccountRepository accountRepository;
 
-    @Inject
-    JwtService jwtService;
-
-    @GET
-    @Path("/jwt")
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response getJwt(){
-        String jwt = jwtService.generateJwt();
-        return Response.ok(jwt).build();
-    }
-
     @POST
+    @PermitAll
     @Path("/login")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response login(LoginRequest loginInput) {
@@ -85,6 +74,7 @@ public class AuthResource {
     }
 
     @POST
+    @PermitAll
     @Path("/register")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -133,6 +123,7 @@ public class AuthResource {
     }
 
     @POST
+    @PermitAll
     @Path("/validate")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -162,6 +153,7 @@ public class AuthResource {
     }
 
     @POST
+    @PermitAll
     @Path("/create")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -211,6 +203,7 @@ public class AuthResource {
     }
 
     @GET
+    @RolesAllowed({"Admin","User"})
     @Path("/check")
     @Produces(MediaType.APPLICATION_JSON)
     public Response checkCookie(@CookieParam("StreetF") String cookie) {

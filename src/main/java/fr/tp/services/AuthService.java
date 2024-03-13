@@ -8,8 +8,10 @@ import fr.tp.repositories.AccountRepository;
 import fr.tp.repositories.AppUserRepository;
 import fr.tp.repositories.RoleRepository;
 import fr.tp.utils.AuthUtils;
+import fr.tp.utils.TokenUtils;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.resource.spi.ConfigProperty;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
 
@@ -25,14 +27,21 @@ public class AuthService {
     @Inject
     AppUserRepository appUserRepository;
 
-    public LoginResponse authenticate(String mail, String password) {
+    @Inject
+    JwtService jwtService;
+
+
+    public LoginResponse authenticate(String mail, String password) throws Exception {
 
         Optional<AccountEntity> accountOpt = accountRepository.findByMail(mail);
-
         boolean isPassword = AuthUtils.checkPassword(password, accountOpt.get().getPassword());
 
         if (accountOpt.isPresent() && isPassword) {
-            return AuthUtils.generateAuthResponse(accountOpt.get());
+
+            AccountEntity acc = accountOpt.get();
+            String token = JwtService.generateJwt(acc);
+            return new LoginResponse("Bearer " + token, acc.getId(), acc.getRole().getWeight(), true);
+
         }
 
         throw new SecurityException("Invalid credentials provided.");
