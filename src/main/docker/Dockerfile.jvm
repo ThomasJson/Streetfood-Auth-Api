@@ -7,7 +7,7 @@
 #
 # Then, build the image with:
 #
-# docker build -f src/main/docker/Dockerfile.jvm -t streetfood-auth-api:latest .
+# docker build -f src/main/docker/Dockerfile.jvm -t rocket667/streetfood-auth-api:latest .
 #
 # Then run the container using:
 #

@@ -8,6 +8,8 @@ import fr.tp.restClient.MailerService;
 import io.smallrye.jwt.auth.principal.ParseException;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import jakarta.ws.rs.core.Context;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import io.smallrye.jwt.build.Jwt;
@@ -48,6 +50,9 @@ public class AuthResource {
 
     @Inject
     AccountRepository accountRepository;
+
+    @Inject
+    JsonWebToken jwt;
 
     @POST
     @Path("/login")
@@ -131,7 +136,7 @@ public class AuthResource {
     public Response validate(TokenRequest tokenRequest) {
 
         try {
-            JsonWebToken jwt = parser.parse(tokenRequest.getToken());
+            jwt = parser.parse(tokenRequest.getToken());
 
             if (jwt != null && jwt.getIssuer().equals("ConfirmEmailToken")) {
 
@@ -161,7 +166,7 @@ public class AuthResource {
     public Response create(CreateUserRequest createUserRequest) {
 
         try {
-            JsonWebToken jwt = parser.parse(createUserRequest.getToken());
+            jwt = parser.parse(createUserRequest.getToken());
             if (jwt != null) {
 
                 String mail = jwt.getClaim("mail");
@@ -207,18 +212,9 @@ public class AuthResource {
     @Path("/check")
     @RolesAllowed({"Admin","User"})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response checkCookie(@CookieParam("StreetF") String cookie) {
-
-        if (cookie == null || cookie.isEmpty()) {
-            return Response.status(Response.Status.OK)
-                    .entity(new AuthResponse("Null or empty token.", false))
-                    .build();
-        }
+    public Response checkCookie() {
 
         try {
-            String token = cookie.startsWith("Bearer ") ? cookie.substring(7) : cookie;
-            JsonWebToken jwt = parser.parse(token);
-
             if (!jwt.containsClaim("mail")) {
                 return Response.status(Response.Status.UNAUTHORIZED)
                         .entity(new AuthResponse("Token is missing some data.", false))
@@ -235,10 +231,16 @@ public class AuthResource {
             }
 
             AccountEntity account = accountOpt.get();
-            LoginResponse loginResponse = new LoginResponse(token, account.getId(), account.getRole().getWeight(), true);
-            return Response.ok().entity(loginResponse).build();
 
-        } catch (JwtException | ParseException e) {
+            JsonObject json = Json.createObjectBuilder()
+                    .add("accId", account.getId().toString())
+                    .add("accRole", account.getRole().getWeight())
+                    .add("result", true)
+                    .build();
+
+            return Response.ok().entity(json).build();
+
+        } catch (JwtException e) {
             return Response.status(Response.Status.UNAUTHORIZED)
                     .entity(new AuthResponse("Token validation error.", false))
                     .build();
