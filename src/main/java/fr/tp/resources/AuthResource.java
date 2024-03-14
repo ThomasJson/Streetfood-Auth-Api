@@ -50,9 +50,10 @@ public class AuthResource {
     AccountRepository accountRepository;
 
     @POST
-    @PermitAll
     @Path("/login")
+    @PermitAll
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response login(LoginRequest loginInput) {
 
         try {
@@ -74,8 +75,8 @@ public class AuthResource {
     }
 
     @POST
-    @PermitAll
     @Path("/register")
+    @PermitAll
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response register(RegisterRequest registerInput) {
@@ -123,8 +124,8 @@ public class AuthResource {
     }
 
     @POST
-    @PermitAll
     @Path("/validate")
+    @PermitAll
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response validate(TokenRequest tokenRequest) {
@@ -153,8 +154,8 @@ public class AuthResource {
     }
 
     @POST
-    @PermitAll
     @Path("/create")
+    @PermitAll
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response create(CreateUserRequest createUserRequest) {
@@ -203,8 +204,8 @@ public class AuthResource {
     }
 
     @GET
-    @RolesAllowed({"Admin","User"})
     @Path("/check")
+    @RolesAllowed({"Admin","User"})
     @Produces(MediaType.APPLICATION_JSON)
     public Response checkCookie(@CookieParam("StreetF") String cookie) {
 

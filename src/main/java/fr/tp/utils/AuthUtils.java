@@ -1,8 +1,5 @@
 package fr.tp.utils;
 
-import fr.tp.entities.AccountEntity;
-import fr.tp.models.LoginResponse;
-import io.smallrye.jwt.build.Jwt;
 import org.mindrot.jbcrypt.BCrypt;
 import java.util.regex.Pattern;
 
