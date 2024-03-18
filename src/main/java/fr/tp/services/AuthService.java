@@ -41,7 +41,7 @@ public class AuthService {
 
         }
 
-        throw new SecurityException("Invalid credentials provided.");
+        throw new SecurityException();
     }
 
     @Transactional

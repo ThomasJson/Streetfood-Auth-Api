@@ -68,7 +68,7 @@ public class AuthResource {
 
         } catch (SecurityException e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new AuthResponse("Unable to process request.", false))
+                    .entity(new AuthResponse("Invalid credentials provided.", false))
                     .build();
         }
 
@@ -178,7 +178,7 @@ public class AuthResource {
 
                 if (acc != null) {
                     return Response.status(Response.Status.OK)
-                            .entity(new AuthResponse("Account created :)", true))
+                            .entity(new AuthResponse("Account created !", true))
                             .build();
                 } else {
                     return Response.status(Response.Status.BAD_REQUEST)
@@ -212,7 +212,7 @@ public class AuthResource {
     @Path("/check")
     @RolesAllowed({"Admin","User"})
     @Produces(MediaType.APPLICATION_JSON)
-    public Response checkCookie() {
+    public Response check() {
 
         try {
             if (!jwt.containsClaim("mail")) {
