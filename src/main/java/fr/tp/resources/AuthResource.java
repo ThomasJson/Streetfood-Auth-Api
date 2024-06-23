@@ -107,7 +107,9 @@ public class AuthResource {
                     .expiresAt(System.currentTimeMillis() + 600000)
                     .sign();
 
-            String confirmationLink = "http://localhost:3000/account/validate/" + confirmationToken;
+            // String confirmationLink = "http://localhost:3000/account/validate/" + confirmationToken;
+            String confirmationLink = "https://streetfood.digital/account/validate/" + confirmationToken;
+
             ConfirmMail confirmMail = new ConfirmMail(registerInput.getMail(), "Create your new Streetfood.com account", confirmationLink);
             mailerService.sendEmail(confirmMail);
 
@@ -211,6 +213,7 @@ public class AuthResource {
     @GET
     @Path("/check")
     @RolesAllowed({"Admin","User"})
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response check() {
 

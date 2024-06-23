@@ -22,3 +22,4 @@ public interface MailerService {
     Response sendEmail(ConfirmMail confirmMail);
 
 }
+

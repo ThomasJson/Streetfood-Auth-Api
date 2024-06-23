@@ -7,7 +7,6 @@ public class CreateUserRequest {
     private String token;
     @JsonProperty("password")
     private String password;
-
     @JsonProperty("confirm")
     private String confirm;
 

@@ -38,6 +38,7 @@ public class LoginResponse {
     public void setRoleWeight(int roleWeight) {
         this.roleWeight = roleWeight;
     }
+
     public boolean isResult() {
         return result;
     }
